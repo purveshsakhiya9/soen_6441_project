@@ -1,4 +1,7 @@
 import requests
+import connection
+
+
 # car api
 url = "https://car-api2.p.rapidapi.com/api/trims"
 # url https://car-api2.p.rapidapi.com/api/trims followed by id number will give the record of te tabels from the api
