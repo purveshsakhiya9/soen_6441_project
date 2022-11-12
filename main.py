@@ -1,3 +1,4 @@
+from prettytable import PrettyTable
 import json
 import uuid
 import requests
@@ -35,7 +36,6 @@ class Main:
 		f = open("car.json","w")
 		f.write(database_value)
 		f.close()
-
 	def read_data_from_file(self):
 		f = open("car.json", "r")
 		car_data = json.loads(f.read())
@@ -69,7 +69,7 @@ class Database_calls(Main):
 
 		cursor.execute(
 			"CREATE TABLE engine("
-			"engine_id varchar(255) NOT NULL, "
+			"id varchar(255) NOT NULL, "
 			"type varchar(255),"
 			"fuel_type varchar(255),"
 			"cylinders varchar(10),"
@@ -79,13 +79,13 @@ class Database_calls(Main):
 			"cam_typ varchar(255),"
 			"transmission varchar(255),"
 			"e_id varchar(255),"
-			"PRIMARY KEY (engine_id),"
+			"PRIMARY KEY (id),"
 			"FOREIGN KEY (e_id) references vehicle (id))"
 		)
 
 		cursor.execute(
 			"CREATE TABLE BODY("
-			"body_id varchar(255),"
+			"id varchar(255),"
 			"type varchar(255),"
 			"doors int(20),"
 			"length int(20),"
@@ -93,29 +93,19 @@ class Database_calls(Main):
 			"seats int(20),"
 			"ground_clearance int(20),"
 			"b_id varchar(255),"
-			"primary key (body_id),"
+			"primary key (id),"
 			"foreign key (b_id) references vehicle (id))"
 		)
 
 		cursor.execute(
 			"CREATE TABLE mileage("
-			"mileage_id varchar(255),"
+			"id varchar(255),"
 			"fuel_tankk_capacity varchar(255),"
 			"range_city varchar(255),"
 			"range_highway varchar(255),"
 			"m_id varchar(255),"
-			"primary key(mileage_id),"
+			"primary key(id),"
 			"foreign key (m_id) references vehicle (id))"
-		)
-
-		cursor.execute(
-			"CREATE TABLE colour("
-			"colour_id  varchar(255) not null ,"
-			"col_name varchar(255),"
-			"rgb varchar(255),"
-			"c_id varchar(255),"
-			"primary key (colour_id),"
-			"foreign key (c_id) references vehicle(id))"
 		)
 
 	def insert_data(self, car_data, cursor):
@@ -144,7 +134,7 @@ class Database_calls(Main):
 			seats = item['make_model_trim_body']['seats']
 			ground_clearance = item['make_model_trim_body']['ground_clearance']
 			cursor.execute(
-				"INSERT INTO body (body_id,type,doors,length,width,seats,ground_clearance,b_id) values (%s,%s,%s,%s,%s,%s,%s,%s)",
+				"INSERT INTO body (id,type,doors,length,width,seats,ground_clearance,b_id) values (%s,%s,%s,%s,%s,%s,%s,%s)",
 				(body_id, body_type, doors, length, width, seats, ground_clearance, b_id)
 			)
 			connection.mydb1.commit()
@@ -162,7 +152,7 @@ class Database_calls(Main):
 			cam_typ = item['make_model_trim_engine']['cam_type']
 			transmission = item['make_model_trim_engine']['transmission']
 			cursor.execute(
-				"INSERT INTO engine(engine_id,type,fuel_type,cylinders,size,horsepower_hp,horsepower_rpm,cam_typ,transmission,e_id) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+				"INSERT INTO engine(id,type,fuel_type,cylinders,size,horsepower_hp,horsepower_rpm,cam_typ,transmission,e_id) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
 				(engine_id, engine_type, fuel_type, cylinders, size, horsepower_hp, horsepower_rpm, cam_typ, transmission,
 				 e_id)
 			)
@@ -175,10 +165,64 @@ class Database_calls(Main):
 			range_city = item['make_model_trim_mileage']['range_city']
 			range_highway = item['make_model_trim_mileage']['range_highway']
 			cursor.execute(
-				"INSERT INTO mileage(mileage_id,fuel_tankk_capacity,range_city,range_highway,m_id) values (%s,%s,%s,%s,%s)",
+				"INSERT INTO mileage(id,fuel_tankk_capacity,range_city,range_highway,m_id) values (%s,%s,%s,%s,%s)",
 				(mileage_id, fuel_tank_capacity, range_city, range_highway, m_id)
 			)
 			connection.mydb1.commit()
+	def table_data(self, table_name, cursor):
+		cursor.execute(f"SELECT * FROM {table_name}")
+		table_data = cursor.fetchall()
+		return table_data
+	def display_table(self,table_name, table_data, cursor):
+		column = dbcalls.column_names(table_name)
+		t = PrettyTable(column)
+		for tuple in table_data:
+			t.add_row(list(tuple))
+		print(t)
+
+	def column_names(self,table_name):
+		cursor.execute(f"show columns from {table_name}")
+		column = [column[0] for column in cursor.fetchall()]
+		return column
+
+	def show_table_by_invoice(self,table_choice, invoice):
+		if table_choice == 1:
+			cursor.execute(
+				f"SELECT * FROM Vehicle where invoice = {invoice}"
+			)
+			table_data = cursor.fetchall()
+		elif table_choice == 2:
+			cursor.execute(
+				f"SELECT body.id,body.type,body.doors,body.length,body.width,body.seats,body.ground_clearance,body.b_id "
+				f"FROM body INNER JOIN Vehicle "
+				f"ON body.b_id = vehicle.id "
+				f"WHERE vehicle.invoice = {invoice}"
+			)
+			table_data = cursor.fetchall()
+		elif table_choice == 3:
+			cursor.execute(
+				f"SELECT engine.id,engine.type,engine.fuel_type,engine.cylinders,engine.size,engine.horsepower_hp,engine.horsepower_rpm,engine.cam_typ,engine.transmission,engine.e_id "
+				f"FROM engine INNER JOIN vehicle "
+				f"ON engine.e_id = vehicle.id "
+				f"WHERE vehicle.invoice = {invoice}"
+			)
+			table_data = cursor.fetchall()
+		elif table_choice == 4:
+			cursor.execute(
+				f"SELECT mileage.id,mileage.fuel_tankk_capacity,mileage.range_city,mileage.range_highway,mileage.m_id "
+				f"FROM mileage INNER JOIN vehicle "
+				f"ON mileage.m_id = vehicle.id "
+				f"WHERE vehicle.invoice = {invoice}"
+			)
+			table_data = cursor.fetchall()
+		return table_data
+
+	def update_table(self,table_name,update_field,update_value,id,cursor):
+		cursor.execute(
+			f"UPDATE {table_name} SET {update_field} = '{update_value}' where id = '{id}'"
+		)
+		connection.mydb1.commit()
+
 
 if __name__ == "__main__":
 	main = Main()
@@ -196,4 +240,73 @@ if __name__ == "__main__":
 		print("Table already exists")
 	else:
 		dbcalls.create_table(cursor)
-	dbcalls.insert_data(car_data,cursor)
+		dbcalls.insert_data(car_data,cursor)
+
+
+	def menu():
+		strs = ('1: Show Table data \n'
+				'2: Show Table data by Ivoice\n'
+				'3: Update\n'
+				'4: Delete\n'
+				'5: Exit')
+		print(strs)
+		choice = int(input("Select Your Choice: "))
+		return int(choice)
+	tables = ['vehicle','body','engine','mileage']
+	while True:  # use while True
+		choice = menu()
+		if choice == 1:
+			while True:
+				strs = ('1: Vehicle \n'
+						'2: Body\n'
+						'3: Engine\n'
+						'4: Mileage\n'
+						'5: Go Back')
+				print(strs)
+				table_choice = int(input("Select Your Choice: "))
+				if table_choice == 5:
+					break
+				table_name = tables[table_choice - 1]
+				table_data = dbcalls.table_data(table_name,cursor)
+				dbcalls.display_table(table_name,table_data, cursor)
+
+		elif choice == 2:
+			invoice = input("Enter Invoice Number: ")
+			while True:
+				strs = ('1: Vehicle \n'
+						'2: Body\n'
+						'3: Engine\n'
+						'4: Mileage\n'
+						'5: Go Back')
+				print(strs)
+				table_choice = int(input("Select Your Choice: "))
+				if table_choice == 5:
+					break
+				table_name = tables[table_choice - 1]
+				table_data = dbcalls.show_table_by_invoice(table_choice,invoice)
+				dbcalls.display_table(table_name,table_data,cursor)
+		elif choice == 3:
+			while True:
+				strs = ('1: Vehicle \n'
+						'2: Body\n'
+						'3: Engine\n'
+						'4: Mileage\n'
+						'5: Go Back')
+				print(strs)
+				table_choice = int(input("Select the Table you want to Update: "))
+				if table_choice == 5:
+					break
+				table_name = tables[table_choice - 1]
+				table_data= dbcalls.table_data(table_name,cursor)
+				dbcalls.display_table(table_name, table_data, cursor)
+				print(dbcalls.column_names(table_name))
+				update_field = input("Enter the field you want to update: ")
+				id = input("Enter the id you want to update: ")
+				update_value = input(f"Enter the new value for {update_field}: ")
+				dbcalls.update_table(table_name,update_field,update_value,id,cursor)
+				table_data = dbcalls.table_data(table_name, cursor)
+				dbcalls.display_table(table_name, table_data, cursor)
+
+		elif choice == 4:
+			break
+
