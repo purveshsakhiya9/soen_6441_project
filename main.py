@@ -193,7 +193,7 @@ class Database_calls(Main):
 			table_data = cursor.fetchall()
 		elif table_choice == 2:
 			cursor.execute(
-				f"SELECT body.id,body.type,body.doors,body.length,body.width,body.seats,body.ground_clearance,body.b_id "
+				f"SELECT body.* "
 				f"FROM body INNER JOIN Vehicle "
 				f"ON body.b_id = vehicle.id "
 				f"WHERE vehicle.invoice = {invoice}"
@@ -201,7 +201,7 @@ class Database_calls(Main):
 			table_data = cursor.fetchall()
 		elif table_choice == 3:
 			cursor.execute(
-				f"SELECT engine.id,engine.type,engine.fuel_type,engine.cylinders,engine.size,engine.horsepower_hp,engine.horsepower_rpm,engine.cam_typ,engine.transmission,engine.e_id "
+				f"SELECT engine.* "
 				f"FROM engine INNER JOIN vehicle "
 				f"ON engine.e_id = vehicle.id "
 				f"WHERE vehicle.invoice = {invoice}"
@@ -209,7 +209,7 @@ class Database_calls(Main):
 			table_data = cursor.fetchall()
 		elif table_choice == 4:
 			cursor.execute(
-				f"SELECT mileage.id,mileage.fuel_tankk_capacity,mileage.range_city,mileage.range_highway,mileage.m_id "
+				f"SELECT mileage.* "
 				f"FROM mileage INNER JOIN vehicle "
 				f"ON mileage.m_id = vehicle.id "
 				f"WHERE vehicle.invoice = {invoice}"
@@ -223,6 +223,12 @@ class Database_calls(Main):
 		)
 		connection.mydb1.commit()
 
+	def delete_record(self,table_name,id, cursor):
+		cursor.execute(f"DELETE mileage from vehicle inner join mileage on vehicle.id = mileage.m_id where vehicle.id = '{id}' ")
+		cursor.execute(f"DELETE engine from vehicle inner join engine on vehicle.id = engine.e_id where vehicle.id = '{id}' ")
+		cursor.execute(f"DELETE body from vehicle inner join body on vehicle.id = body.b_id where vehicle.id = '{id}'")
+		cursor.execute(f"delete from vehicle where id = '{id}'")
+		connection.mydb1.commit()
 
 if __name__ == "__main__":
 	main = Main()
@@ -308,5 +314,24 @@ if __name__ == "__main__":
 				dbcalls.display_table(table_name, table_data, cursor)
 
 		elif choice == 4:
+			while True:
+				strs = ('1: Vehicle \n'
+						'2: Body\n'
+						'3: Engine\n'
+						'4: Mileage\n'
+						'5: Go Back')
+				print(strs)
+				table_choice = int(input("Select the Table you want to delete: "))
+				if table_choice == 5:
+					break
+				table_name = tables[table_choice - 1]
+				table_data = dbcalls.table_data(table_name, cursor)
+				dbcalls.display_table(table_name, table_data, cursor)
+				id = input("Enter the id you want to delete: ")
+				dbcalls.delete_record(table_name,id,cursor)
+				table_data = dbcalls.table_data(table_name, cursor)
+				dbcalls.display_table(table_name, table_data, cursor)
+
+		elif choice == 5:
 			break
 
