@@ -2,15 +2,13 @@ from prettytable import PrettyTable
 import uuid
 from connection import connection
 
-class TDG():
+
+class TDG:
     def __init__(self):
-        print('Init Called')
         c = connection.connect(self)
         self.cursor = c.cursor()
 
-
     def check_table_if_exists(self):
-
         self.cursor.execute("Show tables like 'vehicle'")
         check_tables = self.cursor.fetchone()
         if check_tables:
@@ -29,7 +27,6 @@ class TDG():
             "invoice varchar(255),"
             "PRIMARY KEY(id))"
         )
-
         self.cursor.execute(
             "CREATE TABLE engine("
             "id varchar(255) NOT NULL, "
@@ -45,7 +42,6 @@ class TDG():
             "PRIMARY KEY (id),"
             "FOREIGN KEY (e_id) references vehicle (id))"
         )
-
         self.cursor.execute(
             "CREATE TABLE BODY("
             "id varchar(255),"
@@ -59,19 +55,74 @@ class TDG():
             "primary key (id),"
             "foreign key (b_id) references vehicle (id))"
         )
-
         self.cursor.execute(
             "CREATE TABLE mileage("
             "id varchar(255),"
-            "fuel_tankk_capacity varchar(255),"
+            "fuel_tank_capacity varchar(255),"
             "range_city varchar(255),"
             "range_highway varchar(255),"
             "m_id varchar(255),"
             "primary key(id),"
             "foreign key (m_id) references vehicle (id))"
         )
+        return True
 
-    def insert_data(self, car_data):
+    def insert_body(self, car_data):
+        # body table
+        for item in car_data:
+            b_id = item['id']
+            body_id = str(uuid.uuid4())
+            body_type = item['make_model_trim_body']['type']
+            doors = item['make_model_trim_body']['doors']
+            length = item['make_model_trim_body']['length']
+            width = item['make_model_trim_body']['width']
+            seats = item['make_model_trim_body']['seats']
+            ground_clearance = item['make_model_trim_body']['ground_clearance']
+            self.cursor.execute(
+                f"INSERT INTO body (id,type,doors,length,width,seats,ground_clearance,b_id) "
+                f"values (%s,%s,%s,%s,%s,%s,%s,%s)",
+                (body_id, body_type, doors, length, width, seats, ground_clearance, b_id)
+            )
+            connection.mydb.commit()
+
+    def insert_engine(self, car_data):
+        # engine table
+        for item in car_data:
+            e_id = item['id']
+            engine_id = str(uuid.uuid4())
+            engine_type = item['make_model_trim_engine']['engine_type']
+            fuel_type = item['make_model_trim_engine']['fuel_type']
+            cylinders = item['make_model_trim_engine']['cylinders']
+            size = item['make_model_trim_engine']['size']
+            horsepower_hp = item['make_model_trim_engine']['horsepower_hp']
+            horsepower_rpm = item['make_model_trim_engine']['horsepower_rpm']
+            cam_typ = item['make_model_trim_engine']['cam_type']
+            transmission = item['make_model_trim_engine']['transmission']
+            self.cursor.execute(
+                "INSERT INTO engine"
+                "(id,type,fuel_type,cylinders,size,horsepower_hp,horsepower_rpm,cam_typ,transmission,e_id) "
+                "values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                (engine_id, engine_type, fuel_type, cylinders, size, horsepower_hp, horsepower_rpm, cam_typ,
+                 transmission,
+                 e_id)
+            )
+            connection.mydb.commit()
+
+    def insert_mileage(self, car_data):
+        # mileage table
+        for item in car_data:
+            m_id = item['id']
+            mileage_id = str(uuid.uuid4())
+            fuel_tank_capacity = item['make_model_trim_mileage']['fuel_tank_capacity']
+            range_city = item['make_model_trim_mileage']['range_city']
+            range_highway = item['make_model_trim_mileage']['range_highway']
+            self.cursor.execute(
+                "INSERT INTO mileage(id,fuel_tank_capacity,range_city,range_highway,m_id) values (%s,%s,%s,%s,%s)",
+                (mileage_id, fuel_tank_capacity, range_city, range_highway, m_id)
+            )
+            connection.mydb.commit()
+
+    def insert_vehicle(self, car_data):
         # vehicle table
         for item in car_data:
             id = item['id']
@@ -86,64 +137,16 @@ class TDG():
             )
             connection.mydb.commit()
 
-        # body table
-        for item in car_data:
-            b_id = item['id']
-            body_id = str(uuid.uuid4())
-            body_type = item['make_model_trim_body']['type']
-            doors = item['make_model_trim_body']['doors']
-            length = item['make_model_trim_body']['length']
-            width = item['make_model_trim_body']['width']
-            seats = item['make_model_trim_body']['seats']
-            ground_clearance = item['make_model_trim_body']['ground_clearance']
-            self.cursor.execute(
-                "INSERT INTO body (id,type,doors,length,width,seats,ground_clearance,b_id) values (%s,%s,%s,%s,%s,%s,%s,%s)",
-                (body_id, body_type, doors, length, width, seats, ground_clearance, b_id)
-            )
-            connection.mydb.commit()
-
-        # engine table
-        for item in car_data:
-            e_id = item['id']
-            engine_id = str(uuid.uuid4())
-            engine_type = item['make_model_trim_engine']['engine_type']
-            fuel_type = item['make_model_trim_engine']['fuel_type']
-            cylinders = item['make_model_trim_engine']['cylinders']
-            size = item['make_model_trim_engine']['size']
-            horsepower_hp = item['make_model_trim_engine']['horsepower_hp']
-            horsepower_rpm = item['make_model_trim_engine']['horsepower_rpm']
-            cam_typ = item['make_model_trim_engine']['cam_type']
-            transmission = item['make_model_trim_engine']['transmission']
-            self.cursor.execute(
-                "INSERT INTO engine(id,type,fuel_type,cylinders,size,horsepower_hp,horsepower_rpm,cam_typ,transmission,e_id) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
-                (engine_id, engine_type, fuel_type, cylinders, size, horsepower_hp, horsepower_rpm, cam_typ,
-                 transmission,
-                 e_id)
-            )
-            connection.mydb.commit()
-        # mileage table
-        for item in car_data:
-            m_id = item['id']
-            mileage_id = str(uuid.uuid4())
-            fuel_tank_capacity = item['make_model_trim_mileage']['fuel_tank_capacity']
-            range_city = item['make_model_trim_mileage']['range_city']
-            range_highway = item['make_model_trim_mileage']['range_highway']
-            self.cursor.execute(
-                "INSERT INTO mileage(id,fuel_tankk_capacity,range_city,range_highway,m_id) values (%s,%s,%s,%s,%s)",
-                (mileage_id, fuel_tank_capacity, range_city, range_highway, m_id)
-            )
-            connection.mydb.commit()
-
     def table_data(self, table_name):
         self.cursor.execute(f"SELECT * FROM {table_name}")
-        table_data = self.cursor.fetchall()
-        return table_data
+        data = self.cursor.fetchall()
+        return data
 
-    def display_table(self, table_name, table_data):
-        column = TDG.column_names(self,table_name)
+    def display_table(self, table_name, data):
+        column = TDG.column_names(self, table_name)
         t = PrettyTable(column)
-        for tuple in table_data:
-            t.add_row(list(tuple))
+        for tuples in data:
+            t.add_row(list(tuples))
         print("\n", t)
 
     def column_names(self, table_name):
@@ -152,11 +155,13 @@ class TDG():
         return column
 
     def show_table_by_invoice(self, table_choice, invoice):
+        table_data = []
         if table_choice == 1:
             self.cursor.execute(
                 f"SELECT * FROM Vehicle where invoice = {invoice}"
             )
             table_data = self.cursor.fetchall()
+            print(table_data)
         elif table_choice == 2:
             self.cursor.execute(
                 f"SELECT body.* "
@@ -194,7 +199,9 @@ class TDG():
             f"DELETE mileage from vehicle inner join mileage on vehicle.id = mileage.m_id where vehicle.id = '{id}' ")
         self.cursor.execute(
             f"DELETE engine from vehicle inner join engine on vehicle.id = engine.e_id where vehicle.id = '{id}' ")
-        self.cursor.execute(f"DELETE body from vehicle inner join body on vehicle.id = body.b_id where vehicle.id = '{id}'")
+        self.cursor.execute(
+            f"DELETE body from vehicle inner join body on vehicle.id = body.b_id where vehicle.id = '{id}'"
+        )
         self.cursor.execute(f"delete from vehicle where id = '{id}'")
         connection.mydb.commit()
         print("Record Deleted Successfully!.")
