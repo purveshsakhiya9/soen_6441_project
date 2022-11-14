@@ -3,12 +3,12 @@ import mysql.connector as mysql
 
 class connection:
     mydb = None
+    singleton = True
     def connect(self):
         host = "localhost"
         user = "root"
         password = "root"
-        singleton = True
-        if singleton == True:
+        if connection.singleton == True:
             try:
                 connection.mydb = mysql.connect(host=host, username=user, password=password)
                 print("connected to mysql server.")
@@ -29,7 +29,7 @@ class connection:
                 print("Database connected Successfully.")
             except Exception as e:
                 print(e)
-            singleton = False
+            connection.singleton = False
             return connection.mydb
         else:
             return connection.mydb
