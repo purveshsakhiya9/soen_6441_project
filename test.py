@@ -31,7 +31,7 @@ class MyTestCase(unittest.TestCase):
         else:
             self.assertEqual(True,TDG.create_table(self))
     def test_db(self):
-        self.assertEqual(connection.connect(self), Main.connection_database(self))
+        self.assertEqual(connection.connect(self),Main.connection_database(self))
     def test_insert_vehicle(self):
         c = connection.connect(self)
         self.cursor = c.cursor()

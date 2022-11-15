@@ -5,7 +5,7 @@ from tdg import TDG
 
 
 class Main:
-    @property
+
     def get_api_data(self):
         # car api
         url = "https://car-api2.p.rapidapi.com/api/trims"
@@ -24,15 +24,15 @@ class Main:
         # fetching ids from api for each record
         information = response.json()["data"]
 
-        db_value = []
+        database_value = []
         # fetching data from api using ids for all the required tables
         for i in range(0, 25):
             url = "https://car-api2.p.rapidapi.com/api/trims/" + str(information[i]['id'])
             response = requests.request("GET", url, headers=headers, params=querystring)
             database_value.append(response.json())
 
-        db_value = json.dumps(database_value)
-        return db_value
+        database_value = json.dumps(database_value)
+        return database_value
 
     @staticmethod
     def write_data_file(database_value):
@@ -61,16 +61,13 @@ class Main:
         selected_option = int(input("Select Your Choice: "))
         return selected_option
 
-
 if __name__ == "__main__":
-
     main = Main()
     tdg = TDG()
-
     if tdg.check_table_if_exists():
         print("Table already exists")
     else:
-        database_value = main.get_api_data
+        database_value = main.get_api_data()
         main.write_data_file(database_value)
         car_data = main.read_data_from_file()
         tdg.create_table()
